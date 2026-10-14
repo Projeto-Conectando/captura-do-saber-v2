@@ -1,0 +1,6 @@
+{
+  "name": "Jogo do Conhecimento",
+  "description": "Um jogo interativo usando a câmera onde você capta letras para testar seu conhecimento.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
