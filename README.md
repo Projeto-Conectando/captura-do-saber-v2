@@ -4,8 +4,6 @@ Jogo do projeto Conectando que usa a câmera para captar o movimento do jogador.
 Manchetes vêm em direção ao jogador, que decide com a mão se cada uma é
 **fato** (arrastar para a esquerda) ou **fake** (arrastar para a direita).
 
-> Versão de teste da mecânica: as manchetes ainda são retângulos genéricos e a resposta certa é sorteada.
-
 ## Rodar localmente
 
 Pré-requisito: Node.js
@@ -17,12 +15,24 @@ npm run dev
 
 Abra http://localhost:3000 no Chrome e permita o acesso à câmera.
 
-## Controles de teste
+## Manchetes
 
-- **D**: liga/desliga o modo de teste (área de detecção, rastro do movimento e resposta certa)
-- **← / →**: escolhe FATO / FAKE pelo teclado (para testar sem câmera)
+As manchetes vêm de uma planilha do Google (com uma cópia de reserva em `public/manchetes.csv`).
+Veja **[MANCHETES.md](MANCHETES.md)** para criar, retirar e corrigir manchetes.
 
-A sensibilidade do gesto é ajustada pelas constantes no topo de `src/motion.ts`.
+## Configurações (ícone de engrenagem)
+
+- **Controle**: câmera (mãos) ou teclado (setas ← FATO / → FAKE)
+- **Câmera**: escolha do dispositivo e zoom (da câmera, quando ela permite; senão, zoom digital)
+- **Banco de manchetes**: de onde vieram as manchetes, linhas ignoradas, recarregar e zerar as já vistas
+- **Som**: volume
+- **Manchete**: velocidade e aumento de velocidade a cada manchete
+- **Gesto**: sensibilidade do arraste, marcador das mãos e modo de teste (mostra a resposta certa e o diagnóstico do gesto)
+
+As configurações ficam salvas no navegador. O jogo pausa enquanto o painel está aberto.
+
+As mãos são rastreadas com o MediaPipe Hand Landmarker (`src/hands.ts`); o modelo fica em
+`public/models/hand_landmarker.task`. Um arraste só vale se começar perto do centro da tela.
 
 ## Publicar
 

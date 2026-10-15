@@ -1,4 +1,6 @@
 import { ActiveCard } from "../types";
+import { ReadyParticles } from "./ReadyParticles";
+import { cardScale, cardTopPct } from "../geometry";
 
 interface HeadlineCardProps {
   card: ActiveCard;
@@ -14,9 +16,8 @@ export function HeadlineCard({ card, now, decisionStart, flyMs, showAnswer }: He
   const p = card.progress;
   const inWindow = p >= decisionStart && !card.result;
 
-  // Card travels from the "horizon" (small, high) towards the player (big, centered)
-  const scale = 0.2 + 0.8 * easeIn(p);
-  const top = 28 + 22 * p;
+  const scale = cardScale(p);
+  const top = cardTopPct(p);
 
   // After a decision the card flies off to the chosen side
   let offsetX = 0;
@@ -48,13 +49,22 @@ export function HeadlineCard({ card, now, decisionStart, flyMs, showAnswer }: He
       }}
     >
       <div
-        className={`relative w-[44vw] max-w-[620px] aspect-[16/9] bg-white rounded-2xl shadow-2xl p-6 md:p-8 flex flex-col gap-3 ${inWindow ? "animate-pulse" : ""}`}
-        style={{ border: `8px solid ${resultColor}` }}
+        className="relative w-[44vw] max-w-[620px] aspect-[16/9] bg-white rounded-2xl shadow-2xl p-6 md:p-8 flex flex-col gap-3 transition-shadow duration-200"
+        style={{
+          border: `8px solid ${resultColor}`,
+          boxShadow: inWindow ? "0 0 0 6px rgba(245, 158, 11, 0.35), 0 0 60px rgba(245, 158, 11, 0.8)" : undefined,
+        }}
       >
+        {inWindow && <ReadyParticles />}
         <span className="text-xs md:text-sm font-black tracking-[0.25em] text-slate-400">
           MANCHETE #{card.headline.index}
         </span>
-        <h2 className="text-2xl md:text-4xl font-black tracking-tight text-slate-900 leading-tight">
+        {/* In test mode the title color gives away the answer: red = FAKE, green = FATO */}
+        <h2
+          className={`text-2xl md:text-4xl font-black tracking-tight leading-tight ${
+            showAnswer ? (card.headline.truth === "FAKE" ? "text-red-600" : "text-emerald-600") : "text-slate-900"
+          }`}
+        >
           {card.headline.title}
         </h2>
         {/* Placeholder text lines */}

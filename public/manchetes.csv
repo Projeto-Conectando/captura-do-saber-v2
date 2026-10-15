@@ -1,0 +1,14 @@
+id,manchete,resposta,explicacao,fonte,tema,ativa
+1,Manchete de teste 1 (exemplo - substitua),FATO,Explicação de teste: diga em uma frase por que é fato.,,teste,sim
+2,Manchete de teste 2 (exemplo - substitua),FAKE,Explicação de teste: diga em uma frase por que é fake.,,teste,sim
+3,Manchete de teste 3 (exemplo - substitua),FATO,Explicação de teste: diga em uma frase por que é fato.,,teste,sim
+4,Manchete de teste 4 (exemplo - substitua),FAKE,Explicação de teste: diga em uma frase por que é fake.,,teste,sim
+5,Manchete de teste 5 (exemplo - substitua),FATO,Explicação de teste: diga em uma frase por que é fato.,,teste,sim
+6,Manchete de teste 6 (exemplo - substitua),FAKE,Explicação de teste: diga em uma frase por que é fake.,,teste,sim
+7,Manchete de teste 7 (exemplo - substitua),FATO,Explicação de teste: diga em uma frase por que é fato.,,teste,sim
+8,Manchete de teste 8 (exemplo - substitua),FAKE,Explicação de teste: diga em uma frase por que é fake.,,teste,sim
+9,Manchete de teste 9 (exemplo - substitua),FATO,Explicação de teste: diga em uma frase por que é fato.,,teste,sim
+10,Manchete de teste 10 (exemplo - substitua),FAKE,Explicação de teste: diga em uma frase por que é fake.,,teste,sim
+11,Manchete de teste 11 (exemplo - substitua),FATO,Explicação de teste: diga em uma frase por que é fato.,,teste,sim
+12,Manchete de teste 12 (exemplo - substitua),FAKE,Explicação de teste: diga em uma frase por que é fake.,,teste,sim
+13,"Exemplo de manchete desativada, com vírgula no texto",FAKE,Esta linha mostra como retirar uma manchete sem apagar: coluna ativa = não.,,teste,não

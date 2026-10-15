@@ -1,5 +1,8 @@
-import { MotionSample, Verdict } from "../types";
-import { DETECTION_ZONE } from "../motion";
+import { Hand } from "lucide-react";
+import { HandPoint, Verdict } from "../types";
+import { InputMode } from "../settings";
+import { Rect } from "../geometry";
+import { StrokeInfo } from "../swipe";
 
 interface HudProps {
   correct: number;
@@ -8,8 +11,30 @@ interface HudProps {
   totalRounds: number;
   lastChoice: Verdict | null;
   decisionOpen: boolean;
-  motion: MotionSample | null;
+  inputMode: InputMode;
+  hands: HandPoint[];
+  trails: { x: number; y: number }[][];
+  hitBox: Rect | null;
+  lastStroke: StrokeInfo | null;
+  showHands: boolean;
   debug: boolean;
+}
+
+// Explains in plain words why the last stroke did or didn't count
+function StrokeDebug({ s }: { s: StrokeInfo }) {
+  const ok = "text-emerald-300";
+  const bad = "text-red-300";
+  return (
+    <div className="absolute bottom-10 left-3 z-40 text-[10px] md:text-xs font-mono text-white bg-black/60 px-2 py-1 rounded flex flex-col gap-0.5">
+      <span>
+        último golpe: {s.dir === "FAKE" ? "→ FAKE" : "← FATO"} ·{" "}
+        <span className={s.accepted ? ok : bad}>{s.accepted ? "VALEU" : "não valeu"}</span>
+      </span>
+      <span className={s.touched ? ok : bad}>tocou a manchete: {s.touched ? "sim" : "não"}</span>
+      <span className={s.dx >= s.minDx ? ok : bad}>distância: {s.dx.toFixed(2)} (mín {s.minDx.toFixed(2)})</span>
+      <span className={s.speed >= s.minSpeed ? ok : bad}>velocidade: {s.speed.toFixed(2)} (mín {s.minSpeed.toFixed(2)})</span>
+    </div>
+  );
 }
 
 function SideLabel({ side, active, open }: { side: Verdict; active: boolean; open: boolean }) {
@@ -26,7 +51,12 @@ function SideLabel({ side, active, open }: { side: Verdict; active: boolean; ope
   );
 }
 
-export function Hud({ correct, wrong, round, totalRounds, lastChoice, decisionOpen, motion, debug }: HudProps) {
+export function Hud({ correct, wrong, round, totalRounds, lastChoice, decisionOpen, inputMode, hands, trails, hitBox, lastStroke, showHands, debug }: HudProps) {
+  const camera = inputMode === "camera";
+  const prompt = camera
+    ? hands.length ? "DECIDA! Arraste com a mão" : "DECIDA! Mostre a mão para a câmera"
+    : "DECIDA! Use as setas ← →";
+
   return (
     <>
       {/* Score */}
@@ -40,46 +70,86 @@ export function Hud({ correct, wrong, round, totalRounds, lastChoice, decisionOp
       <SideLabel side="FAKE" active={lastChoice === "FAKE"} open={decisionOpen} />
 
       {decisionOpen && (
-        <div className="absolute bottom-[8%] left-1/2 -translate-x-1/2 z-40 bg-amber-400 text-slate-900 font-black text-lg md:text-2xl tracking-tight px-6 py-2 rounded-full shadow-lg">
-          DECIDA! Arraste com a mão
+        <div className="absolute bottom-[8%] left-1/2 -translate-x-1/2 z-40 bg-amber-400 text-slate-900 font-black text-lg md:text-2xl tracking-tight px-6 py-2 rounded-full shadow-lg whitespace-nowrap">
+          {prompt}
         </div>
       )}
 
-      {/* Fixed player position guide (head + shoulders outline) */}
-      <svg
-        className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[70%] z-10 pointer-events-none opacity-40"
-        viewBox="0 0 200 220"
-        fill="none"
-        stroke="white"
-        strokeWidth="3"
-        strokeDasharray="8 6"
-      >
-        <ellipse cx="100" cy="60" rx="34" ry="44" />
-        <path d="M20 220 C20 150 50 125 100 125 C150 125 180 150 180 220" />
-      </svg>
+      {/* Player position guide, only needed when not using the camera */}
+      {!camera && (
+        <svg
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[70%] z-10 pointer-events-none opacity-40"
+          viewBox="0 0 200 220"
+          fill="none"
+          stroke="white"
+          strokeWidth="3"
+          strokeDasharray="8 6"
+        >
+          <ellipse cx="100" cy="60" rx="34" ry="44" />
+          <path d="M20 220 C20 150 50 125 100 125 C150 125 180 150 180 220" />
+        </svg>
+      )}
+
+      <HandMarkers inputMode={inputMode} hands={hands} trails={trails} hitBox={hitBox} showHands={showHands} debug={debug} />
+
+      {debug && camera && lastStroke && <StrokeDebug s={lastStroke} />}
 
       {debug && (
+        <div className="absolute bottom-3 left-3 z-40 text-[10px] md:text-xs font-mono text-white bg-black/50 px-2 py-1 rounded">
+          modo {camera ? `câmera · mãos detectadas: ${hands.length}` : "teclado · ← FATO / → FAKE"}
+        </div>
+      )}
+    </>
+  );
+}
+
+interface HandMarkersProps {
+  inputMode: InputMode;
+  hands: HandPoint[];
+  trails: { x: number; y: number }[][];
+  hitBox: Rect | null;
+  showHands: boolean;
+  debug: boolean;
+}
+
+export function HandMarkers({ inputMode, hands, trails, hitBox, showHands, debug }: HandMarkersProps) {
+  const camera = inputMode === "camera";
+  return (
+    <>
+      {camera && debug && (
         <>
-          <div
-            className="absolute z-20 pointer-events-none border-2 border-dashed border-cyan-400/70 rounded-xl"
-            style={{
-              left: `${DETECTION_ZONE.x0 * 100}%`,
-              top: `${DETECTION_ZONE.y0 * 100}%`,
-              width: `${(DETECTION_ZONE.x1 - DETECTION_ZONE.x0) * 100}%`,
-              height: `${(DETECTION_ZONE.y1 - DETECTION_ZONE.y0) * 100}%`,
-            }}
-          />
-          {motion && (
+          {/* Area where a hand counts as touching the headline */}
+          {hitBox && (
             <div
-              className="absolute z-40 w-6 h-6 -ml-3 -mt-3 rounded-full bg-cyan-400 border-2 border-white shadow pointer-events-none"
-              style={{ left: `${motion.x * 100}%`, top: `${motion.y * 100}%` }}
+              className="absolute z-40 pointer-events-none bg-cyan-400/10 border-2 border-dashed border-cyan-400/70 rounded-xl"
+              style={{
+                left: `${hitBox.x0 * 100}%`,
+                top: `${hitBox.y0 * 100}%`,
+                width: `${(hitBox.x1 - hitBox.x0) * 100}%`,
+                height: `${(hitBox.y1 - hitBox.y0) * 100}%`,
+              }}
             />
           )}
-          <div className="absolute bottom-3 left-3 z-40 text-[10px] md:text-xs font-mono text-white bg-black/50 px-2 py-1 rounded">
-            debug (D) · teclas ← FATO / → FAKE · movimento: {motion ? motion.mass : 0}px
-          </div>
+          {trails.flat().map((p, i) => (
+            <div
+              key={i}
+              className="absolute z-40 w-2 h-2 -ml-1 -mt-1 rounded-full bg-cyan-300/80 pointer-events-none"
+              style={{ left: `${p.x * 100}%`, top: `${p.y * 100}%` }}
+            />
+          ))}
         </>
       )}
+
+      {camera && showHands && hands.map(h => (
+        <div
+          key={h.key}
+          className="absolute z-40 w-14 h-14 -ml-7 -mt-7 rounded-full bg-white/30 border-4 border-white shadow-lg flex items-center justify-center pointer-events-none backdrop-blur-[2px]"
+          style={{ left: `${h.x * 100}%`, top: `${h.y * 100}%` }}
+        >
+          <Hand className="w-7 h-7 text-white drop-shadow" strokeWidth={2.5} />
+        </div>
+      ))}
+
     </>
   );
 }
